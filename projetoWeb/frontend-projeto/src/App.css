@@ -1,0 +1,149 @@
+nav {
+  background-color: #333;
+  padding: 1rem;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.form-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.form-container input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-container button {
+  padding: 0.75rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  grid-column: 1 / -1; 
+}
+
+.form-container button:hover {
+  background-color: #0056b3;
+}
+
+.list-container {
+  list-style: none;
+  padding: 0;
+}
+
+.list-container li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.list-container li:last-child {
+  border-bottom: none;
+}
+
+.list-container span {
+  font-size: 1.1rem;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+}
+
+h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: #eee;
+  margin: 2rem 0;
+}
+.list-item-link {
+  font-size: 1.1rem;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.list-item-link:hover {
+  text-decoration: underline;
+  color: #0056b3;
+}
+
+.detail-card {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-card p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.detail-card p:not(:last-child) {
+  margin-bottom: 0.75rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}

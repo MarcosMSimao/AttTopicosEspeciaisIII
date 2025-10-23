@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_spring3
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: bd_spring
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
+  backend:
+    build:
+      context: ./projeto
+      dockerfile: Dockerfile
+    container_name: backend_spring3
+    depends_on:
+      - postgres
+    environment:
+      # Ajuste para seu application.properties/yaml
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bd_spring
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      # Opcional: definir porta do Spring
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - app-net
+volumes:
+  postgres-data:
+
+networks:
+  app-net:
+    driver: bridge
