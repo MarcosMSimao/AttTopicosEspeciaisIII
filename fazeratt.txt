@@ -1,0 +1,212 @@
+Abaixo um passo a passo prático (com comandos) para reunir as informações do workspace /workspaces/AttTopicosEspeciaisIII e preencher o documento com tudo que precisa (execução, endpoints, BD, testes, versões, observações). Siga na ordem.
+
+Confirmar estrutura do codespace
+
+# listar projetos
+ls -la /workspaces/AttTopicosEspeciaisIII
+# ver subpastas relevantes
+ls -la /workspaces/AttTopicosEspeciaisIII/projetoWeb
+ls -la /workspaces/AttTopicosEspeciaisIII/aulaSpring
+
+Coletar metadados (git, versão)
+# git remoto e commit atual
+cd /workspaces/AttTopicosEspeciaisIII
+git remote -v
+git rev-parse --short HEAD
+
+# versão do backend Spring (aulaSpring)
+grep -m1 -E "<artifactId>|<version>" aulaSpring/projeto/pom.xml -n || true
+
+# versão do projetoWeb (procure por pom ou package.json)
+grep -m1 '"version":' -n projetoWeb/frontend-projeto/package.json || true
+
+Detectar portas e serviços expostos
+# procurar docker-compose nos dois projetos
+grep -R "ports:" -n projetoWeb || true
+grep -R "ports:" -n aulaSpring || true
+
+# procurar configurações de datasource
+grep -R "spring.datasource" -n aulaSpring || true
+grep -R "spring.datasource" -n projetoWeb || true
+
+
+Resolver conflito do Postgres (duas opções)
+Opção A (usar o Postgres do projetoWeb para ambos): editar URL do aulaSpring para apontar para localhost:5432
+
+''''properties
+# filepath: aulaSpring/projeto/src/main/resources/application.properties
+# ...existing code...
+spring.datasource.url=jdbc:postgresql://localhost:5432/bd_spring
+# ...existing code...
+''''
+
+Opção B (mudar mapeamento de porta do Postgres em aulaSpring): alterar docker-compose do aulaSpring
+
+''''yaml
+# filepath: aulaSpring/docker-compose.yml
+# ...existing code...
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_spring3
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: bd_spring
+    ports:
+      - "5433:5432"    # alterado para evitar conflito
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+# ...existing code...
+''''
+
+Subir os serviços (exemplo usando Opção B ou A conforme escolhido)
+
+# 1) Subir projetoWeb (backend + banco) via docker-compose
+cd /workspaces/AttTopicosEspeciaisIII/projetoWeb
+docker-compose up --build -d
+
+# 2) Subir aulaSpring (se for via docker-compose, após ajustar porta)
+cd /workspaces/AttTopicosEspeciaisIII/aulaSpring
+docker-compose up --build -d   # se existir docker-compose no aulaSpring
+
+# OU rodar aulaSpring localmente com Maven (sem docker)
+cd /workspaces/AttTopicosEspeciaisIII/aulaSpring/projeto
+./mvnw spring-boot:run
+
+Rodar frontend dev (se houver)
+cd /workspaces/AttTopicosEspeciaisIII/projetoWeb/frontend-projeto
+npm ci
+npm run dev
+# abrir no navegador (usa $BROWSER conforme instrução)
+$BROWSER http://localhost:5173
+
+Confirmar que serviços estão rodando e coletar logs/ports
+# listar containers
+docker ps
+
+# ver logs de um container (ex: nome container postgres do projetoWeb)
+docker logs <container_name> --tail 200
+
+# obter portas mapeadas
+docker ps --format "table {{.Names}}\t{{.Ports}}"
+
+Encontrar endpoints automaticamente para preencher documento
+# Java Spring: procurar controllers e RequestMapping
+grep -R -n "@RestController\|@Controller\|@RequestMapping\|@GetMapping\|@PostMapping" -n aulaSpring || true
+grep -R -n "@RestController\|@Controller\|@RequestMapping\|@GetMapping\|@PostMapping" -n projetoWeb/projeto || true
+
+# Node/JS: procurar rota express / api
+grep -R -n "express\|app.get\|app.post\|router\." projetoWeb || true
+
+
+Abaixo um passo a passo prático (com comandos) para reunir as informações do workspace /workspaces/AttTopicosEspeciaisIII e preencher o documento com tudo que precisa (execução, endpoints, BD, testes, versões, observações). Siga na ordem.
+
+Confirmar estrutura do codespace
+Coletar metadados (git, versão)
+Detectar portas e serviços expostos
+Resolver conflito do Postgres (duas opções)
+Opção A (usar o Postgres do projetoWeb para ambos): editar URL do aulaSpring para apontar para localhost:5432
+Opção B (mudar mapeamento de porta do Postgres em aulaSpring): alterar docker-compose do aulaSpring
+Subir os serviços (exemplo usando Opção B ou A conforme escolhido)
+Rodar frontend dev (se houver)
+Confirmar que serviços estão rodando e coletar logs/ports
+Encontrar endpoints automaticamente para preencher documento
+Copie as rotas encontradas para a seção "Endpoints" do documento.
+
+Executar testes e salvar saída (para anexar ao documento)
+
+# Java (aulaSpring)
+cd /workspaces/AttTopicosEspeciaisIII/aulaSpring/projeto
+./mvnw test | tee /workspaces/AttTopicosEspeciaisIII/reports/aulaSpring-test-output.txt
+
+# Node/frontend (se houver testes)
+cd /workspaces/AttTopicosEspeciaisIII/projetoWeb/frontend-projeto
+npm test --silent 2>&1 | tee /workspaces/AttTopicosEspeciaisIII/reports/frontend-test-output.txt
+
+Exportar esquema/DUMP do banco PostgreSQL (ex.: usar container postgres do projetoWeb)
+
+# identificar container do postgres
+docker ps --filter "ancestor=postgres" --format "{{.Names}}"
+
+# fazer dump (exemplo: container postgres_projetoWeb)
+docker exec -i <postgres_container_name> pg_dump -U root -d bd_projeto > /workspaces/AttTopicosEspeciaisIII/reports/bd_projeto_dump.sql
+# se container não tiver pg_dump, instale client na máquina host e execute via pg_dump com host/porta
+
+Capturar health checks / endpoints operacionais
+Testar endpoints principais com curl e salvar respostas:
+
+curl -sS http://localhost:8080/actuator/health | tee /workspaces/AttTopicosEspeciaisIII/reports/aulaSpring-health.json
+curl -sS http://localhost:8081/api/alguma-rota | tee /workspaces/AttTopicosEspeciaisIII/reports/projetoWeb-some-endpoint.txt
+
+Template de documento (crie e preencha)
+Use este template Markdown e substitua as seções com o conteúdo coletado.
+
+# Documento de Entrega - Projeto (preencher)
+
+## 1. Identificação
+- Repositório: AttTopicosEspeciaisIII
+- Commit usado: <commit-hash>
+- Data: <data>
+
+## 2. Projetos no workspace
+- projetoWeb: /workspaces/AttTopicosEspeciaisIII/projetoWeb
+  - Como rodar: docker-compose up --build
+  - Frontend: /projetoWeb/frontend-projeto (npm run dev)
+  - DB: Postgres (porta host: 5432)
+- aulaSpring: /workspaces/AttTopicosEspeciaisIII/aulaSpring
+  - Como rodar: ./mvnw spring-boot:run  OU docker-compose up (se configurado)
+  - DB: Postgres (porta host: 5433 se alterado)
+
+## 3. Versões e dependências principais
+- Java / Spring Boot: <versão encontrada>
+- Node / npm / Vite: <versão>
+- Imagens Docker usadas: <lista>
+
+## 4. Endpoints principais
+- /api/exemplo -> descrição
+- (copiar lista obtida pelo grep)
+
+## 5. Banco de dados
+- Nome: bd_spring / bd_projeto
+- Dump: reports/bd_projeto_dump.sql
+- Observações sobre conflito de porta: ...
+
+## 6. Testes
+- Resultado testes Java: reports/aulaSpring-test-output.txt
+- Resultado testes frontend: reports/frontend-test-output.txt
+
+## 7. Logs e observações
+- Logs principais: docker logs <container> (anexar trechos)
+- Issues conhecidas: (liste aqui)
+
+## 8. Passos para replicação local (resumido)
+1. Subir projetoWeb:
+   - cd projetoWeb && docker-compose up --build -d
+2. Subir aulaSpring:
+   - cd aulaSpring && ./mvnw spring-boot:run
+3. Rodar frontend:
+   - cd projetoWeb/frontend-projeto && npm ci && npm run dev
+
+## 9. Anexos
+- reports/
+  - aulaSpring-test-output.txt
+  - frontend-test-output.txt
+  - bd_projeto_dump.sql
+  - aulaSpring-health.json
+
+  Criar o arquivo:
+  mkdir -p /workspaces/AttTopicosEspeciaisIII/reports
+cat > /workspaces/AttTopicosEspeciaisIII/DOCUMENTO_ENTREGA.md <<'MD'
+# Preencha conforme o template acima
+MD
+code /workspaces/AttTopicosEspeciaisIII/DOCUMENTO_ENTREGA.md    # abre no VS Code
+
+Verificar aplicacoes no navegador
+# abrir app frontend
+$BROWSER http://localhost:5173
+
+# abrir actuator/health (se exposto)
+$BROWSER http://localhost:8080/actuator/health
+
