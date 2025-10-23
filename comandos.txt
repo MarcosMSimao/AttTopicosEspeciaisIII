@@ -1,0 +1,61 @@
+Para rodar os dois projetos (projetoWeb e aulaSpring) você pode usar Docker Compose para um e Maven/Vite para os frontends. Opções e comandos principais:
+
+Rodar projetoWeb (backend + Postgres) e frontend (dev)
+Subir backend + banco: docker-compose.yml
+
+Execução:
+Backend Dockerfile: Dockerfile
+Config de BD do backend: application.properties
+Rodar frontend React (dev) (ex.: frontend-projeto)
+
+package.json: package.json
+proxy/Vite: vite.config.js
+Rodar aulaSpring localmente (Maven) — conecta ao Postgres
+Se você quer rodar o backend da pasta aulaSpring localmente:
+app: ProjetoApplication.java
+propriedades: application.properties
+Observação importante sobre conflito de porta do Postgres
+
+Ambos os docker-compose atuais expõem Postgres na porta host 5432 → conflito se você tentar subir os dois docker-compose simultaneamente. Duas soluções rápidas:
+
+a) Não subir o Postgres duplicado: use o Postgres do projetoWeb para ambos (ajuste a URL de conexão do aulaSpring para apontar para jdbc:postgresql://localhost:5432/bd_spring).
+
+b) Alterar mapeamento de porta de um dos Postgres (ex.: aulaSpring para 5433). Exemplo de alteração em aulaSpring/docker-compose.yml:
+
+'''yaml
+// filepath: docker-compose.yml
+// ...existing code...
+services:
+postgres:
+image: postgres:15
+container_name: postgres_spring3
+restart: always
+environment:
+POSTGRES_USER: root
+POSTGRES_PASSWORD: root
+POSTGRES_DB: bd_spring
+ports:
+- "5433:5432" # alterado para evitar conflito com o outro postgres
+volumes:
+- postgres-data:/var/lib/postgresql/data
+...
+'''
+
+E atualizar a URL em application.properties para:
+'''properties
+// filepath: application.properties
+// ...existing code...
+spring.datasource.url=jdbc:postgresql://localhost:5433/bd_spring
+// ...existing code...
+'''
+
+Resumo rápido de comandos recomendados
+
+Backend + DB (projetoWeb):
+cd projetoWeb && docker-compose up --build
+Frontend React (frontend-projeto):
+cd projetoWeb/frontend-projeto && npm ci && npm run dev
+Backend aulaSpring (local com Maven):
+cd aulaSpring/projeto && ./mvnw spring-boot:run
+(Opcional) Se for subir Postgres da aulaSpring também via docker-compose, mude a porta como mostrado acima.
+Se quiser, eu gero os trechos exatos para aplicar (arquivos modificados) — diga qual abordagem prefere.
